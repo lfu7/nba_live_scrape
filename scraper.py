@@ -22,14 +22,14 @@ def nba_games():
         active_games = scrape_espn_nba_games()
         return [json.dumps(item) for item in list_of_maps]
     except Exception as e:
-        print(f"Failed to retrieve live NBA games: {e}")
+        print(f'Failed to retrieve live NBA games: {e}')
 
 @app.route('/nba_games/<string:id>', methods=['GET'])
 def nba_game_details(id):
     try:
         active_players = get_active_players(id)
         game_details = {
-            "activePlayers": active_players,
+            'activePlayers': active_players,
         }
 
         return json.dumps(game_details)
@@ -51,25 +51,25 @@ def scrape_espn_nba_games():
     - 'id': the ESPN id of the game
     """
 
-    # Send a GET request to the page
+    # Send a GET request to the page.
     response = requests.get(NBA_SCOREBOARD_URL, headers=HEADERS)
 
-    # Check if the request was successful
+    # Check if the request was successful.
     if response.status_code != 200:
         print(f'Failed to fetch data: HTTP {response.status_code}')
         return
 
-    # Parse the HTML content of the page
+    # Parse the HTML content of the page.
     soup = BeautifulSoup(response.text, 'html.parser')
 
-    # Find all game containers
+    # Find all game containers.
     games = soup.find_all('section', class_='Scoreboard')
 
-    # Extract data for each game
+    # Extract data for each game.
     active_games = []
     for game in games:
         try:
-            # Get the names of the teams
+            # Get the names of the teams.
             gamecast_links = game.find_all('a', href=True)
 
 
@@ -91,13 +91,13 @@ def scrape_espn_nba_games():
                     game_id = href.split('gameId/')[-1]
 
                 active_games.append({
-                    "away": away,
-                    "home": home,
-                    "id": game_id,
+                    'away': away,
+                    'home': home,
+                    'id': game_id,
                 })
 
         except Exception as e:
-            print(f"Error processing game: {e}")
+            print(f'Error processing game: {e}')
 
     return active_games
 
@@ -109,32 +109,38 @@ def get_active_players(game_id):
 
     Returns:
     A list of NBA player details, including:
-
+    - 'name': name of the player
+    - 'team': team of the player
+    - 'id': ESPN id of the player
     """
 
+    # Obtain the ESPN game URL.
     url = NBA_GAMES_URL.format(game_id)
-    response = requests.get(url, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    elements = soup.find_all("div", class_="OnTheCourtTableWrapper")
+
+    # Send a GET request to the URL.
+    response = requests.get(url, headers=HEADERS)
+
+    # Parse the HTML content of the page.
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # TODO: comment the remaining code.
+    elements = soup.find_all('div', class_='OnTheCourtTableWrapper')
 
     active_players = []
     for element in elements:
         team = element.img.get('alt')
-        for link_html in element.find_all("table", class_=["Table", "Table--align-right"])[0].find_all("a", href=True):
-            # If you already have BeautifulSoup Tag objects (e.g., from find_all), skip re-parsing
-            # link_soup = BeautifulSoup(link_html, "html.parser").find("a")
-
+        for link_html in element.find_all('table', class_=['Table', 'Table--align-right'])[0].find_all('a', href=True):
             name = link_html.get_text(strip=True)
-            player_url = link_html.get("href")
+            player_url = link_html.get('href')
             player_id = player_url.split('/')[-2]
 
             active_players.append({
-                "name": name,
-                "id": player_id,
-                "team": team,
+                'name': name,
+                'id': player_id,
+                'team': team,
             })
             
     return active_players
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
