@@ -1,8 +1,11 @@
+import argparse
 import json
 
 from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify
 import requests
+
+# TODO: add linter for python.
 
 # Used to spoof ESPN's bot detection
 HEADERS = {
@@ -20,9 +23,10 @@ app = Flask(__name__)
 def nba_games():
     try:
         active_games = scrape_espn_nba_games()
-        return [json.dumps(item) for item in list_of_maps]
+        return [json.dumps(item) for item in active_games]
     except Exception as e:
         print(f'Failed to retrieve live NBA games: {e}')
+
 
 @app.route('/nba_games/<string:id>', methods=['GET'])
 def nba_game_details(id):
@@ -36,8 +40,6 @@ def nba_game_details(id):
     
     except Exception as e:
         print(f'Failed to retrieve NBA game details: {e}')
-
-
 
 
 def scrape_espn_nba_games():
@@ -89,12 +91,13 @@ def scrape_espn_nba_games():
                 
                 if 'gameId' in href:
                     game_id = href.split('gameId/')[-1]
+                    print(game_id)
 
-                active_games.append({
-                    'away': away,
-                    'home': home,
-                    'id': game_id,
-                })
+            active_games.append({
+                'away': away,
+                'home': home,
+                'id': game_id,
+            })
 
         except Exception as e:
             print(f'Error processing game: {e}')
@@ -142,5 +145,14 @@ def get_active_players(game_id):
             
     return active_players
 
+
+def parse_args():
+    # Set up argument parsing
+    parser = argparse.ArgumentParser(description="Run a Flask application.")
+    parser.add_argument('--port', type=int, default=5000, help='Port number to run the Flask app on.')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    args = parse_args()
+    app.run(host='127.0.0.1', port=args.port)
