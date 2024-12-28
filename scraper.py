@@ -91,7 +91,6 @@ def scrape_espn_nba_games():
                 
                 if 'gameId' in href:
                     game_id = href.split('gameId/')[-1]
-                    print(game_id)
 
             active_games.append({
                 'away': away,
@@ -119,8 +118,6 @@ def get_active_players(game_id):
 
     # Obtain the ESPN game URL.
     url = NBA_GAMES_URL.format(game_id)
-
-    print("url: ", url)
 
     # Send a GET request to the URL.
     response = requests.get(url, headers=HEADERS)
