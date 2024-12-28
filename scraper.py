@@ -52,5 +52,27 @@ def scrape_espn_nba_games():
             print(f"Error processing game: {e}")
 
 
+def get_active_players(game_id):
+    url = f'https://www.espn.com/nba/game/_/{game_id}'
+    response = requests.get(url, headers=headers)
+    soup = BeautifulSoup(response.text, "html.parser")
+    elements = soup.find_all("div", class_="OnTheCourtTableWrapper")
+
+    rows = []
+    for element in elements:
+        team = element.img.get('alt')
+        for link_html in element.find_all("table", class_=["Table", "Table--align-right"])[0].find_all("a", href=True):
+            # If you already have BeautifulSoup Tag objects (e.g., from find_all), skip re-parsing
+            # link_soup = BeautifulSoup(link_html, "html.parser").find("a")
+
+            name = link_html.get_text(strip=True)
+            player_url = link_html.get("href")
+            player_id = player_url.split('/')[-2]
+            rows.append({"Player Name": name, "Player ID": player_id, "Team": team})
+            print(player_id)
+            
+    df = pd.DataFrame(rows)
+    return df
+
 if __name__ == "__main__":
     scrape_espn_nba_games()
